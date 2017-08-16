@@ -1,0 +1,8 @@
+# 添加忽略文件 .idea
+.idea
+
+#添加忽略文件 *.iml
+*.iml
+
+#添加忽略文件 target
+target
