@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"   
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+
+<sqlMap namespace="role">
+
+	<typeAlias alias="role" type="com.jk.entity.Role"/>
+    <typeAlias alias="requestRole" type="com.jk.entity.RequestRole"/>
+	<typeAlias alias="responseRole" type="com.jk.entity.ResponseRole"/>
+	<typeAlias alias="menuRequest" type="com.jk.entity.MenuRequest"/>
+	<typeAlias alias="menuResponse" type="com.jk.entity.MenuResponse"/>
+	<select id="selectUserRoleListJson" parameterClass="requestRole" resultClass="responseRole">
+	    select t.t_name as name,t.t_id as id,NVL2(m.roles_id, 1, 0) as "checked"  from t_roles t 
+		left join
+		(select r.* from t_u_r_mids r where r.user_id=#userId#) m on t.t_id=m.roles_id
+	</select>
+	
+	<delete id="deleteUserRoleList" parameterClass="requestRole">
+	    delete from t_u_r_mids where user_id=#userId#
+	</delete>
+	
+	<insert id="insertUserRoleList" parameterClass="requestRole">
+	         insert into t_u_r_mids(t_Id,user_id,roles_id)
+	         values(SEQ_USER_USERID.nextval,#userId#,#roleId#)
+	</insert>
+	
+	<select id="queryRoleData" parameterClass="requestRole" resultClass="responseRole">
+	   select * from
+	    (select t.*,rownum r from
+			(select t_id as "roleId", 
+				t_desc as "roleDesc",
+				t_name as "roleName"
+			from t_roles) t where rownum <![CDATA[<=]]> #pageEnd# ) where r >= #pageStart# 
+	</select>
+	<select id="queryRoleCount"  resultClass="Long">
+	   
+		select count(1) from t_roles
+	</select>
+	
+	<!-- 查询角色权限列表 -->
+	<select id="selectRoleMenuListJson" parameterClass="menuRequest" resultClass="menuResponse">
+		select m.t_id as "id", 
+			m.t_name as "name", 
+			m.t_url as "url", 
+			m.t_pid as "pid", 
+			m.t_type as "type", 
+			nvl2(m1.t_role_id, 1, 0) as "checked",
+			m.t_parent as "isParent" 
+		from t_menus m
+		left join (select m2.t_role_id, m2.t_menu_id from t_r_m_mid m2 where m2.t_role_id = #roleId#) m1
+		on m.t_id = m1.t_menu_id
+		order by m.t_id
+	</select>
+	
+	<delete id="deleteMenuRoleList" parameterClass="menuRequest">
+	    delete from t_r_m_mid where t_role_id=#roleId#
+	</delete>
+	
+	<insert id="insertMenuRoleList" parameterClass="menuRequest">
+	         insert into t_r_m_mid (t_Id,t_role_id,t_menu_id)
+	         values(T_MENUS_SEQ.nextval,#roleId#,#menuId#)
+	</insert>
+	
+</sqlMap>

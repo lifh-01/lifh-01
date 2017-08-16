@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"   
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+
+<sqlMap namespace="tree">
+
+
+	<typeAlias alias="tree" type="com.jk.entity.Tree"/>
+    <typeAlias alias="menuRequest" type="com.jk.entity.MenuRequest"/>
+	<typeAlias alias="menuResponse" type="com.jk.entity.MenuResponse"/>
+	
+	<select id="selectTreeNodes" resultClass="tree">
+	    select p_id as id,
+	           p_name as text,
+	           p_url as url,
+	           p_ids as pid
+	           from t_tree where p_ids=#id#
+	</select>
+	
+	<select id="selectTreeSonCount" resultClass="Long">
+	    select count(*)
+	           from t_tree where p_ids=#id#
+	</select>
+	<!-- 查询主页菜单树列表 -->
+ <select id="selectTreeListJson" parameterClass="menuRequest" resultClass="java.util.HashMap">
+       select m3.t_id as "id",
+        m3.t_name as "text", 
+        m3.t_url as "url", 
+        m3.t_pid as "pid" from t_menus 
+        m3 right join 
+        ( select distinct t_menu_id from t_r_m_mid m1 
+        right join (select roles_id from t_u_r_mids where user_id = #userId#)
+         m2 on m1.t_role_id = m2.roles_id) m4
+          on m3.t_id = m4.t_menu_id where m3.t_pid = #pid# 
+          and m3.t_type=0
+          order by m3.t_id  </select>
+	
+</sqlMap>

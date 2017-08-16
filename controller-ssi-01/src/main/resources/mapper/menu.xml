@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"   
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+
+<sqlMap namespace="menu">
+
+	<typeAlias alias="menuRequest" type="com.jk.entity.MenuRequest"/>
+	<typeAlias alias="menuResponse" type="com.jk.entity.MenuResponse"/>
+	
+	
+	<!-- 查询角色权限列表 -->
+	<select id="selectMenuListJson"  resultClass="menuResponse">
+		select m.t_id as "id", 
+			m.t_name as "name", 
+			m.t_url as "url", 
+			m.t_pid as "pid"
+		from t_menus m
+	</select>
+	
+	<!-- 查询添加角色权限列表下拉框数据 -->
+	<select id="selectMenuModle" parameterClass="menuRequest" resultClass="menuResponse">
+	    select 
+			m.t_name as "name", 
+			m.t_id as "id"
+		from t_menus m where m.t_pid=0
+	</select>
+	
+	<!--  新增权限信息 -->
+	
+	 <insert id="insertMenu" parameterClass="menuRequest">
+	   insert into t_menus(t_id,t_name,t_url,t_pid,t_parent,t_type)
+	   values
+	   (T_MENUS_SEQ.nextval,#name#,#url#,#pid#,#parent#,#type#)
+	</insert>
+	
+</sqlMap>

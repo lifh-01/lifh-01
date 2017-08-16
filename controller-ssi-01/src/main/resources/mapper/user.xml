@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2.0//EN"   
+"http://ibatis.apache.org/dtd/sql-map-2.dtd">
+
+
+<sqlMap namespace="t_user">
+
+
+	<typeAlias alias="t_user" type="com.jk.entity.User"/>
+    <typeAlias alias="requestUser" type="com.jk.entity.RequestUser"/>
+	<typeAlias alias="responseUser" type="com.jk.entity.ResponseUser"/>
+    <typeAlias alias="menuRequest" type="com.jk.entity.MenuRequest"/>
+	<typeAlias alias="menuResponse" type="com.jk.entity.MenuResponse"/>
+	<typeAlias alias="requestFiles" type="com.jk.entity.RequestFiles"/>
+	<typeAlias alias="responseFiles" type="com.jk.entity.ResponseFiles"/>
+
+	<!-- 登陆请求 -->
+		<select id="login" parameterClass="requestUser" resultClass="responseUser" >
+			select user_id as "userId", 
+				user_name as "userName" ,
+				user_password as "userPassword",
+				user_nameimg as "userNameImg",
+				user_falnum as "failNum",
+				(sysdate - user_faldate) * 24 * 60 * 60 * 1000 as "faildate"
+			from t_user where user_name=#userName#
+		</select>
+	<!-- 查询所有用户信息 -->
+	    <select id="queryUserData" resultClass="responseUser" >
+	    select * from
+	    (select t.*,rownum r from
+			(select user_id as "userId", 
+				user_name as "userName" ,
+				user_password as "userPassword"
+			from t_user) t where rownum <![CDATA[<=]]> #pageEnd# ) where r >= #pageStart#  
+		</select>
+	<!-- 判断是否否存在用户名 -->
+		<select id="checkUserNameCount" parameterClass="requestUser" resultClass="Long" >
+			select count(*)
+			from t_user where user_name=#userName#
+		</select>
+	
+	<!--修改登录的次数   -->
+		<update id="updateUserByUserName"> 
+		    update t_user set
+		       user_falnum = #failNum#,
+		       user_faldate = sysdate 
+		       where user_name = #userName#
+	     </update>
+     
+     <!-- 注册用户信息 -->
+	     <insert id="registerUser" parameterClass="requestUser">
+	         insert into t_user(user_Id,user_Name,user_Password,user_NameImg)
+	         values(SEQ_USER_USERID.nextval,#userName#,#userPassword#,#userNameImg#)
+	     </insert>
+	     
+	 <!-- 查询用户总条数 -->   
+	 <select id="queryUserCount"  resultClass="Long" >
+			select count(1)
+			from  t_user
+	</select>
+	
+	<!-- 删除一个用户信息 -->
+	<delete id="deleteCheckedUser" parameterClass="requestUser" >
+	    delete from t_user where user_id=#userId#
+	</delete>
+	
+	<!-- 根据Id查询单挑用户信息 -->
+	<select id="selectUserAccountByUserId" parameterClass="requestUser" resultClass="responseUser">
+	   select 
+	      user_id as userId,
+	      user_name as userName,
+	      user_password as userPassword
+	          from t_user where user_id=#userId#
+	
+	</select>
+	
+	<!-- 添加用户 -->
+	<insert id="insertUser" parameterClass="requestUser">
+	    insert into t_user(user_id,user_name,user_password)
+	    values
+	    (SEQ_USER_USERID.nextval,#userName#,#userPassword#)
+	</insert>
+	
+	<!-- 修改用户 -->
+	<insert id="UpdateUser" parameterClass="requestUser">
+	    update t_user set
+	      user_name=#userName#,
+	      user_password=#userPassword#
+	      where user_id=#userId#
+	</insert>
+	
+	<!-- 查询用户权限列表 -->
+	<select id="selectUserMenuListJson" parameterClass="menuRequest" resultClass="menuResponse">
+		select distinct m.t_id as "id", 
+          m.t_name as "name", 
+          m.t_url as "url", 
+          m.t_pid as "pid", 
+          m.t_type as "type", 
+          nvl2(m1.t_role_id, 1, 0) as "checked",
+          m.t_parent as "isParent" 
+		  from t_menus m
+		  right join (select m2.t_role_id, m2.t_menu_id from t_r_m_mid m2) m1
+		  on m.t_id = m1.t_menu_id
+		  right join (select roles_id from t_u_r_mids where user_id = #userId#) m3
+		  on m1.t_role_id = m3.roles_id
+		  order by m.t_id
+	</select>
+	
+	<!-- 查询用户所上传文件指纹是否存在 -->
+	<select id="queryUserPhotoMd" parameterClass="requestFiles" resultClass="responseFiles">
+	    select m.T_FINGERPRINT as fileFingerprint,
+	           m.T_HREF as fileHref,
+	           m.t_name as fileName
+	       from t_file m 
+	       where 
+	       m.T_FINGERPRINT=#fileFingerprint#
+	
+	</select>
+	
+	<!-- 把用户上传的文件信息保存在数据库 -->
+	<insert id="insertFiles" parameterClass="requestFiles">
+	    insert into t_file(t_id,t_name,T_HREF,T_FINGERPRINT)
+	    values
+	    (t_file_seq.nextval,#fileName#,#fileHref#,#fileFingerprint#)
+	</insert>
+
+</sqlMap>
